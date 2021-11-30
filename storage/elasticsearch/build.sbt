@@ -23,9 +23,9 @@ libraryDependencies ++= Seq(
   "org.apache.predictionio" %% "apache-predictionio-core"  % version.value % "provided",
   "org.apache.spark"        %% "spark-core"                % sparkVersion.value % "provided",
   "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearchVersion.value,
-  "org.elasticsearch"       %% "elasticsearch-spark-20"    % elasticsearchVersion.value
+  "org.elasticsearch"       %% "elasticsearch-spark-30"    % elasticsearchVersion.value
     exclude("org.apache.spark", "*"),
-  "org.specs2"              %% "specs2"                    % "2.3.13" % "test")
+  "org.specs2"              %% "specs2-core"                    % "4.2.0" % "test")
 
 parallelExecution in Test := false
 

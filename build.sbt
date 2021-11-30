@@ -72,7 +72,7 @@ hadoopVersion in ThisBuild := sys.props.getOrElse("hadoop.version", "3.3.1")
 
 akkaVersion in ThisBuild := sys.props.getOrElse("akka.version", "2.6.17")
 
-elasticsearchVersion in ThisBuild := sys.props.getOrElse("elasticsearch.version", "6.8.1")
+elasticsearchVersion in ThisBuild := sys.props.getOrElse("elasticsearch.version", "7.15.2")
 
 hbaseVersion in ThisBuild := sys.props.getOrElse("hbase.version", "1.2.6")
 
