@@ -22,6 +22,7 @@ import scala.collection.JavaConversions._
 import org.apache.http.entity.ContentType
 import org.apache.http.nio.entity.NStringEntity
 import org.elasticsearch.client.RestClient
+import org.elasticsearch.client.Request
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
@@ -94,11 +95,10 @@ object ESUtils {
     size: Int)(
       implicit formats: Formats): Seq[JValue] = {
     val entity = new NStringEntity(query, ContentType.APPLICATION_JSON)
-    val response = client.performRequest(
-      "POST",
-      s"/$index/_search",
-      Map("size" -> s"${size}"),
-      entity)
+    val request = new Request("POST", s"/$index/_search")
+    request.addParameters(Map("size" -> s"${size}"))
+    request.setEntity(entity)
+    val response = client.performRequest(request)
     val responseJValue = parse(EntityUtils.toString(response.getEntity))
     val hits = (responseJValue \ "hits" \ "hits").extract[Seq[JValue]]
     hits.map(h => (h \ "_source"))
@@ -132,11 +132,10 @@ object ESUtils {
       else {
         val json = ("scroll" -> scrollLife) ~ ("scroll_id" -> scrollId)
         val scrollBody = new NStringEntity(compact(render(json)), ContentType.APPLICATION_JSON)
-        val response = client.performRequest(
-          "POST",
-          "/_search/scroll",
-          Map[String, String](),
-          scrollBody)
+        val request = new Request("POST", "/_search/scroll")
+        request.addParameters(Map[String, String]())
+        request.setEntity(scrollBody)
+        val response = client.performRequest(request)
         val responseJValue = parse(EntityUtils.toString(response.getEntity))
         scroll((responseJValue \ "_scroll_id").extract[String],
           (responseJValue \ "hits" \ "hits").extract[Seq[JValue]],
@@ -145,11 +144,10 @@ object ESUtils {
     }
 
     val entity = new NStringEntity(query, ContentType.APPLICATION_JSON)
-    val response = client.performRequest(
-      "POST",
-      s"/$index/_search",
-      Map("scroll" -> scrollLife),
-      entity)
+    val request = new Request("POST", s"/$index/_search")
+    request.addParameters(Map("scroll" -> scrollLife))
+    request.setEntity(entity)
+    val response = client.performRequest(request)
     val responseJValue = parse(EntityUtils.toString(response.getEntity))
     scroll((responseJValue \ "_scroll_id").extract[String],
       (responseJValue \ "hits" \ "hits").extract[Seq[JValue]],
@@ -161,17 +159,15 @@ object ESUtils {
     index: String,
     json: String)(
       implicit formats: Formats): String = {
-    client.performRequest(
-      "HEAD",
-      s"/$index",
-      Map("include_type_name" -> "false")).getStatusLine.getStatusCode match {
+    val request = new Request("HEAD", s"/$index")
+    request.addParameters(Map("include_type_name" -> "false"))
+    client.performRequest(request).getStatusLine.getStatusCode match {
         case 404 =>
           val entity = new NStringEntity(json, ContentType.APPLICATION_JSON)
-          client.performRequest(
-            "PUT",
-            s"/$index",
-            Map("include_type_name" -> "false"),
-            entity).getStatusLine.getStatusCode match {
+          val request2 = new Request("PUT", s"/$index")
+          request2.addParameters(Map("include_type_name" -> "false"))
+          request2.setEntity(entity)
+          client.performRequest(request2).getStatusLine.getStatusCode match {
               case 200 =>
                 "_doc"
               case _ =>
@@ -191,10 +187,9 @@ object ESUtils {
     client: RestClient,
     index: String)(
       implicit formats: Formats): String = {
-    val response = client.performRequest(
-      "GET",
-      s"/$index",
-      Map("include_type_name" -> "true"))
+    val request = new Request("GET", s"/$index")
+    request.addParameters(Map("include_type_name" -> "true"))
+    val response = client.performRequest(request)
     response.getStatusLine.getStatusCode match {
       case 200 =>
         (parse(EntityUtils.toString(response.getEntity)) \ index \ "mappings")

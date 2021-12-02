@@ -28,6 +28,7 @@ import org.apache.predictionio.data.storage.StorageClientConfig
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.elasticsearch.client.RestClient
+import org.elasticsearch.client.Request
 import org.elasticsearch.hadoop.mr.EsInputFormat
 import org.elasticsearch.spark._
 import org.joda.time.DateTime
@@ -116,11 +117,10 @@ class ESPEvents(client: RestClient, config: StorageClientConfig, eventdataName: 
                 ("term" ->
                   ("eventId" -> eventId)))
             val entity = new NStringEntity(compact(render(json)), ContentType.APPLICATION_JSON)
-            val response = client.performRequest(
-              "POST",
-              s"/$index/_delete_by_query",
-              Map("refresh" -> ESUtils.getEventDataRefresh(config)).asJava,
-              entity)
+            val request = new Request("POST", s"/$index/_delete_by_query")
+            request.addParameters(Map("refresh" -> ESUtils.getEventDataRefresh(config)).asJava)
+            request.setEntity(entity)
+            val response = client.performRequest(request)
           val jsonResponse = parse(EntityUtils.toString(response.getEntity))
           if ((jsonResponse \ "deleted").extract[Int] == 0) {
             logger.warn("The number of documents that were successfully deleted is 0. "
