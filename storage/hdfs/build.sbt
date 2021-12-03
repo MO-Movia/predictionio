@@ -21,10 +21,22 @@ name := "apache-predictionio-data-hdfs"
 
 libraryDependencies ++= Seq(
   "org.apache.hadoop"        % "hadoop-common"            % hadoopVersion.value
-    exclude("commons-beanutils", "*"),
-  "org.apache.hadoop"        % "hadoop-hdfs"              % hadoopVersion.value,
+    exclude("commons-beanutils", "*")
+    exclude("jakarta.activation", "*")
+    exclude("com.fasterxml.jackson.core", "*")
+    exclude("org.codehaus.woodstox", "stax2-api"),
+  "org.apache.hadoop"        % "hadoop-hdfs"              % hadoopVersion.value
+    exclude("com.fasterxml.jackson.core", "*"),
   "org.apache.predictionio" %% "apache-predictionio-data" % version.value % "provided",
   "org.scalatest"           %% "scalatest"                % "3.2.10" % "test")
+
+/*assemblyMergeStrategy in assembly := {
+  case PathList("javax", "activation") => MergeStrategy.discard
+  case PathList("jakarta", "activation") => MergeStrategy.discard
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}*/
 
 parallelExecution in Test := false
 
