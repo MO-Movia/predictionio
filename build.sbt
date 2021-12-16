@@ -39,7 +39,7 @@ lazy val scalaSparkDepsVersion = Map(
     "3.2" -> Map(
       "akka" -> "2.6.17",
       "hadoop" -> "3.3.1",
-      "json4s" -> "3.6.12")
+      "json4s" -> "3.7.0-M11")
     )
   )
 
@@ -80,7 +80,7 @@ json4sVersion in ThisBuild := {
   sparkBinaryVersion.value match {
     case "2.0" | "2.1" | "2.2" | "2.3" => "3.2.11"
     case "2.4" => "3.5.3"
-    case "3.2" => "3.6.12"
+    case "3.2" => "3.7.0-M11"
   }
 }
 
