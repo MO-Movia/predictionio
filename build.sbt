@@ -33,7 +33,15 @@ lazy val scalaSparkDepsVersion = Map(
     "2.3" -> Map(
       "akka" -> "2.5.17",
       "hadoop" -> "2.7.7",
-      "json4s" -> "3.2.11")))
+      "json4s" -> "3.2.11")
+    ),
+  "2.12" -> Map(
+    "3.2" -> Map(
+      "akka" -> "2.6.17",
+      "hadoop" -> "3.3.1",
+      "json4s" -> "3.7.0-M11")
+    )
+  )
 
 name := "apache-predictionio-parent"
 
@@ -41,7 +49,7 @@ version in ThisBuild := "0.15.0-SNAPSHOT"
 
 organization in ThisBuild := "org.apache.predictionio"
 
-scalaVersion in ThisBuild := sys.props.getOrElse("scala.version", "2.11.12")
+scalaVersion in ThisBuild := sys.props.getOrElse("scala.version", "2.12.8")
 
 scalaBinaryVersion in ThisBuild := binaryVersion(scalaVersion.value)
 
@@ -56,15 +64,15 @@ javacOptions in (ThisBuild, compile) ++= Seq("-source", "1.8", "-target", "1.8",
   "-Xlint:deprecation", "-Xlint:unchecked")
 
 // Ignore differentiation of Spark patch levels
-sparkVersion in ThisBuild := sys.props.getOrElse("spark.version", "2.1.3")
+sparkVersion in ThisBuild := sys.props.getOrElse("spark.version", "3.2.0")
 
 sparkBinaryVersion in ThisBuild := binaryVersion(sparkVersion.value)
 
-hadoopVersion in ThisBuild := sys.props.getOrElse("hadoop.version", "2.7.7")
+hadoopVersion in ThisBuild := sys.props.getOrElse("hadoop.version", "3.3.1")
 
-akkaVersion in ThisBuild := sys.props.getOrElse("akka.version", "2.5.17")
+akkaVersion in ThisBuild := sys.props.getOrElse("akka.version", "2.6.17")
 
-elasticsearchVersion in ThisBuild := sys.props.getOrElse("elasticsearch.version", "6.8.1")
+elasticsearchVersion in ThisBuild := sys.props.getOrElse("elasticsearch.version", "7.15.2")
 
 hbaseVersion in ThisBuild := sys.props.getOrElse("hbase.version", "1.2.6")
 
@@ -72,6 +80,7 @@ json4sVersion in ThisBuild := {
   sparkBinaryVersion.value match {
     case "2.0" | "2.1" | "2.2" | "2.3" => "3.2.11"
     case "2.4" => "3.5.3"
+    case "3.2" => "3.7.0-M11"
   }
 }
 

@@ -29,6 +29,7 @@ import org.apache.predictionio.data.storage.EvaluationInstanceSerializer
 import org.apache.predictionio.data.storage.EvaluationInstances
 import org.apache.predictionio.data.storage.StorageClientConfig
 import org.elasticsearch.client.{ResponseException, RestClient}
+import org.elasticsearch.client.Request
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
@@ -78,10 +79,9 @@ class ESEvaluationInstances(client: RestClient, config: StorageClientConfig, met
 
   def get(id: String): Option[EvaluationInstance] = {
     try {
-      val response = client.performRequest(
-        "GET",
-        s"/$index/$estype/$id",
-        Map.empty[String, String].asJava)
+      val request = new Request("GET", s"/$index/$estype/$id")
+      request.addParameters(Map.empty[String, String].asJava)
+      val response = client.performRequest(request)
       val jsonResponse = parse(EntityUtils.toString(response.getEntity))
       (jsonResponse \ "found").extract[Boolean] match {
         case true =>
@@ -137,11 +137,10 @@ class ESEvaluationInstances(client: RestClient, config: StorageClientConfig, met
     val id = i.id
     try {
       val entity = new NStringEntity(write(i), ContentType.APPLICATION_JSON)
-      val response = client.performRequest(
-        "PUT",
-        s"/$index/$estype/$id",
-        Map("refresh" -> "true").asJava,
-        entity)
+      val request = new Request("PUT", s"/$index/$estype/$id")
+      request.addParameters(Map("refresh" -> "true").asJava)
+      request.setEntity(entity)
+      val response = client.performRequest(request)
       val json = parse(EntityUtils.toString(response.getEntity))
       val result = (json \ "result").extract[String]
       result match {
@@ -158,10 +157,9 @@ class ESEvaluationInstances(client: RestClient, config: StorageClientConfig, met
 
   def delete(id: String): Unit = {
     try {
-      val response = client.performRequest(
-        "DELETE",
-        s"/$index/$estype/$id",
-        Map("refresh" -> "true").asJava)
+      val request = new Request("DELETE", s"/$index/$estype/$id")
+      request.addParameters(Map("refresh" -> "true").asJava)
+      val response = client.performRequest(request)
       val json = parse(EntityUtils.toString(response.getEntity))
       val result = (json \ "result").extract[String]
       result match {

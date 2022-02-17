@@ -55,7 +55,11 @@ object AdminServer {
       complete(StatusCodes.NotFound,
         Map("message" -> s"missing required query parameter ${msg}."))
     case AuthenticationFailedRejection(cause, challengeHeaders) =>
-      complete(StatusCodes.Unauthorized, challengeHeaders,
+      // TODO: updating akka seems to have caused problems with putting challengeHeaders into 
+      // the response, see if that can/needs to be fixed
+      // complete(StatusCodes.Unauthorized, challengeHeaders,
+      //   Map("message" -> s"Invalid accessKey."))
+      complete(StatusCodes.Unauthorized,
         Map("message" -> s"Invalid accessKey."))
   }.result()
 

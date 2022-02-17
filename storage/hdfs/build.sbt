@@ -21,11 +21,27 @@ name := "apache-predictionio-data-hdfs"
 
 libraryDependencies ++= Seq(
   "org.apache.hadoop"        % "hadoop-common"            % hadoopVersion.value
-    exclude("commons-beanutils", "*"),
+    exclude("commons-beanutils", "*")
+    exclude("jakarta.activation", "*"),
   "org.apache.hadoop"        % "hadoop-hdfs"              % hadoopVersion.value,
   "org.apache.predictionio" %% "apache-predictionio-data" % version.value % "provided",
-  "org.scalatest"           %% "scalatest"                % "2.1.7" % "test")
+  "org.scalatest"           %% "scalatest"                % "3.2.10" % "test")
 
+// making sure the needed netty version gets pulled for this subproject
+dependencyOverrides ++= Seq(
+  "io.netty"                 % "netty-all"                % "4.1.42.Final"
+)
+
+// jackson (and a couple other libraries) causes problems during deduplication phase of module-info.class -
+// files apparently not needed, so discard them to avoid error
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.first
+  case PathList("module-info.class") => MergeStrategy.discard
+  case PathList("META-INF", "versions", xs @ _, "module-info.class") => MergeStrategy.discard
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
 parallelExecution in Test := false
 
 pomExtra := childrenPomExtra.value

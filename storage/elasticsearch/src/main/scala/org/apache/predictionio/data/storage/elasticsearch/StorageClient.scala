@@ -27,6 +27,7 @@ import org.apache.predictionio.data.storage.StorageClientException
 import org.apache.predictionio.workflow.CleanupFunctions
 import org.elasticsearch.client.RestClient
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback
+import org.elasticsearch.client.Request
 
 import grizzled.slf4j.Logging
 

@@ -28,6 +28,7 @@ import org.apache.predictionio.data.storage.App
 import org.apache.predictionio.data.storage.Apps
 import org.apache.predictionio.data.storage.StorageClientConfig
 import org.elasticsearch.client.{ResponseException, RestClient}
+import org.elasticsearch.client.Request
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
@@ -71,10 +72,9 @@ class ESApps(client: RestClient, config: StorageClientConfig, metadataName: Stri
 
   def get(id: Int): Option[App] = {
     try {
-      val response = client.performRequest(
-        "GET",
-        s"/$index/$estype/$id",
-        Map.empty[String, String].asJava)
+      val request = new Request("GET", s"/$index/$estype/$id")
+      request.addParameters(Map.empty[String, String].asJava)
+      val response = client.performRequest(request)
       val jsonResponse = parse(EntityUtils.toString(response.getEntity))
       (jsonResponse \ "found").extract[Boolean] match {
         case true =>
@@ -103,11 +103,10 @@ class ESApps(client: RestClient, config: StorageClientConfig, metadataName: Stri
           ("term" ->
             ("name" -> name)))
       val entity = new NStringEntity(compact(render(json)), ContentType.APPLICATION_JSON)
-      val response = client.performRequest(
-        "POST",
-        s"/$index/_search",
-        Map.empty[String, String].asJava,
-        entity)
+      val request = new Request("POST", s"/$index/_search")
+      request.addParameters(Map.empty[String, String].asJava)
+      request.setEntity(entity)
+      val response = client.performRequest(request)
       val jsonResponse = parse(EntityUtils.toString(response.getEntity))
       val results = (jsonResponse \ "hits" \ "hits").extract[Seq[JValue]]
       results.headOption.map { jv =>
@@ -137,11 +136,10 @@ class ESApps(client: RestClient, config: StorageClientConfig, metadataName: Stri
     val id = app.id.toString
     try {
       val entity = new NStringEntity(write(app), ContentType.APPLICATION_JSON)
-      val response = client.performRequest(
-        "PUT",
-        s"/$index/$estype/$id",
-        Map("refresh" -> "true").asJava,
-        entity)
+      val request = new Request("PUT", s"/$index/$estype/$id")
+      request.addParameters(Map("refresh" -> "true").asJava)
+      request.setEntity(entity)
+      val response = client.performRequest(request)
       val jsonResponse = parse(EntityUtils.toString(response.getEntity))
       val result = (jsonResponse \ "result").extract[String]
       result match {
@@ -158,10 +156,9 @@ class ESApps(client: RestClient, config: StorageClientConfig, metadataName: Stri
 
   def delete(id: Int): Unit = {
     try {
-      val response = client.performRequest(
-        "DELETE",
-        s"/$index/$estype/$id",
-        Map("refresh" -> "true").asJava)
+      val request = new Request("DELETE", s"/$index/$estype/$id")
+      request.addParameters(Map("refresh" -> "true").asJava)
+      val response = client.performRequest(request)
       val json = parse(EntityUtils.toString(response.getEntity))
       val result = (json \ "result").extract[String]
       result match {

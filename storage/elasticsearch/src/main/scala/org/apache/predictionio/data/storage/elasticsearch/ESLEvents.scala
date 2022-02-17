@@ -29,6 +29,9 @@ import org.apache.predictionio.data.storage.Event
 import org.apache.predictionio.data.storage.LEvents
 import org.apache.predictionio.data.storage.StorageClientConfig
 import org.elasticsearch.client.RestClient
+import org.elasticsearch.client.Request
+import org.elasticsearch.client.RequestOptions
+import org.elasticsearch.client.RequestOptions.Builder
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -74,11 +77,9 @@ class ESLEvents(val client: RestClient, config: StorageClientConfig, val eventda
   override def remove(appId: Int, channelId: Option[Int] = None): Boolean = {
     val index = eventdataName + "_" + eventdataKey(appId, channelId)
     try {
-      client.performRequest(
-        "DELETE",
-        s"/$index",
-        Map.empty[String, String].asJava
-      ).getStatusLine.getStatusCode match {
+      val request = new Request("DELETE", s"/$index")
+      request.addParameters(Map.empty[String, String].asJava)
+      client.performRequest(request).getStatusLine.getStatusCode match {
         case 200 => true
         case _ =>
           error(s"Failed to remove $index")
@@ -117,11 +118,10 @@ class ESLEvents(val client: RestClient, config: StorageClientConfig, val eventda
           ("creationTime" -> ESUtils.formatUTCDateTime(event.creationTime)) ~
           ("properties" -> write(event.properties.toJObject))
         val entity = new NStringEntity(compact(render(json)), ContentType.APPLICATION_JSON)
-        val response = client.performRequest(
-          "PUT",
-          s"/$index/$estype/$id",
-          Map("refresh" -> ESUtils.getEventDataRefresh(config)).asJava,
-          entity)
+        val request = new Request("PUT", s"/$index/$estype/$id")
+        request.addParameters(Map("refresh" -> ESUtils.getEventDataRefresh(config)).asJava)
+        request.setEntity(entity)
+        val response = client.performRequest(request)
         val jsonResponse = parse(EntityUtils.toString(response.getEntity))
         val result = (jsonResponse \ "result").extract[String]
         result match {
@@ -176,12 +176,13 @@ class ESLEvents(val client: RestClient, config: StorageClientConfig, val eventda
         }.mkString("", "\n", "\n")
 
         val entity = new StringEntity(json)
-        val response = client.performRequest(
-          "POST",
-          "/_bulk",
-          Map("refresh" -> ESUtils.getEventDataRefresh(config)).asJava,
-          entity,
-          new BasicHeader("Content-Type", "application/x-ndjson"))
+        val request = new Request("POST", "/_bulk")
+        request.addParameters(Map("refresh" -> ESUtils.getEventDataRefresh(config)).asJava)
+        request.setEntity(entity)
+        val requestOptions = RequestOptions.DEFAULT.toBuilder()
+        requestOptions.addHeader("Content-Type", "application/x-ndjson")
+        request.setOptions(requestOptions)
+        val response = client.performRequest(request)
 
         val responseJson = parse(EntityUtils.toString(response.getEntity))
         val items = (responseJson \ "items").asInstanceOf[JArray]
@@ -217,11 +218,10 @@ class ESLEvents(val client: RestClient, config: StorageClientConfig, val eventda
             ("term" ->
               ("eventId" -> eventId)))
         val entity = new NStringEntity(compact(render(json)), ContentType.APPLICATION_JSON)
-        val response = client.performRequest(
-          "POST",
-          s"/$index/_search",
-          Map.empty[String, String].asJava,
-          entity)
+        val request = new Request("POST", s"/$index/_search")
+        request.addParameters(Map.empty[String, String].asJava)
+        request.setEntity(entity)
+        val response = client.performRequest(request)
         val jsonResponse = parse(EntityUtils.toString(response.getEntity))
         val results = (jsonResponse \ "hits" \ "hits").extract[Seq[JValue]]
         results.headOption.map { jv =>
@@ -247,11 +247,10 @@ class ESLEvents(val client: RestClient, config: StorageClientConfig, val eventda
             ("term" ->
               ("eventId" -> eventId)))
         val entity = new NStringEntity(compact(render(json)), ContentType.APPLICATION_JSON)
-        val response = client.performRequest(
-          "POST",
-          s"/$index/_delete_by_query",
-          Map("refresh" -> ESUtils.getEventDataRefresh(config)).asJava,
-          entity)
+        val request = new Request("POST", s"/$index/_delete_by_query")
+        request.addParameters(Map("refresh" -> ESUtils.getEventDataRefresh(config)).asJava)
+        request.setEntity(entity)
+        val response = client.performRequest(request)
         val jsonResponse = parse(EntityUtils.toString(response.getEntity))
         (jsonResponse \ "deleted").extract[Int] > 0
       } catch {
